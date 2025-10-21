@@ -1,0 +1,258 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+      "env": {
+          "hwcFolderPath": "hwc",
+          "hwcBinFolderPath": "hwbin",
+          "tiapPath": "C:/Program Files/Siemens/Automation/Portal V19"
+      }
+    },
+    "inputs": [
+    {
+      "type": "promptString",
+      "id": "ipAddress",
+      "description": "The target PLC IP address",
+      "default": "192.168.0.12"
+    },
+    {
+      "type": "pickString",
+      "id": "dlMode",
+      "description": "Select the download mode",
+      "options": [
+        "Full",
+        "Delta",
+        "Reset"
+      ],
+      "default": "Delta"
+    },
+    {
+      "type": "pickString",
+      "id": "cmpMode",
+      "description": "Select the comparasion mode",
+      "options": [
+        "Delta",
+        "All"
+      ],
+      "default": "All"
+    },
+    {
+      "type": "promptString",
+      "id": "plcName",
+      "description": "The name of the PLC",
+      "default": "Controller"
+    },
+    {
+      "type": "promptString",
+      "id": "userName",
+      "description": "Username",
+      "default": "myPLCUser1"
+    },
+    {
+      "type": "promptString",
+      "id": "password",
+      "description": "Password",
+      "default": "Siemens-1"
+    },
+    {
+      "type": "promptString",
+      "id": "certificatePath",
+      "description": "Path to connection certificate file",
+      "default": "certificate/reference_x509.crt"
+    },
+    {
+      "type": "promptString",
+      "id": "importCertificatePath",
+      "description": "Path to certificate file to import (.p12)",
+      "default": "certificate/containerWithPublicAndPrivateKeys_x509.p12"
+    },
+    {
+      "type": "pickString",
+      "id": "certPurpose",
+      "description": "Select the purpose of the certificate",
+      "options": [
+        "TLS",
+        "WebServer",
+        "OpcUaServer",
+        "SysLogClient"
+      ],
+      "default": "TLS"
+    },
+    {
+      "type": "pickString",
+      "id": "accessLevel",
+      "description": "Select the access protection level",
+      "options": [
+        "FullAccessWithSafety",
+        "FullAccess",
+        "HmiAccess",
+        "ReadAccess",
+        "NoAccess"
+      ],
+      "default": "FullAccess"
+    },
+    {
+      "type": "promptString",
+      "id": "orderNumber",
+      "description": "The order number of the PLC or module",
+      "default": "6ES7 515-2AN03-0AB0"
+    },
+    {
+      "type": "promptString",
+      "id": "gsdFile",
+      "description": "Path to the GSDML file",
+      "default": "GSDML-V2.45-SIEMENS-ET200SP-20241104.XML"
+    },
+    {
+      "type": "promptString",
+      "id": "gsdId",
+      "description": "The GSD ID of the module",
+      "default": "DIM ST V3.3"
+    },
+    {
+      "type": "promptString",
+      "id": "firmwareVersion",
+      "description": "The firmware version of the PLC or module",
+      "default": "3.1"
+    },
+    {
+      "type": "promptString",
+      "id": "outputFileName",
+      "description": "The name of the file to generate",
+      "default": "hwc/hwc_templates/t_.hwl.yml"
+    }
+    ],
+    "tasks": [
+      {
+        "label": "SW | Compile",
+        "type": "shell",
+        "command": "apax build"
+      },
+      {
+        "label": "SW | Download",
+        "type": "shell",
+        "command": "apax sld load --accept-security-disclaimer -i ${workspaceFolder}\\bin\\1500 -t ${input:ipAddress} -m ${input:dlMode} -r"
+      },
+      {
+        "label": "SW | Compile & download",
+        "type": "shell",
+        "command": "apax sld load --accept-security-disclaimer -i ${workspaceFolder}\\bin\\1500 -t ${input:ipAddress} -m ${input:dlMode} -r",
+        "dependsOn": "SW | Compile"
+      },
+
+
+
+      {
+        "label": "TIAX | Create handover documents",
+        "type": "shell",
+        "command": "apax ax2tia -i ${workspaceFolder}\\bin\\1500\\${workspaceFolderBasename}.lib -o ${workspaceFolder}\\bin\\handover-folder",
+        "dependsOn": "SW | Compile"
+      },      
+      {
+        "label": "TIAX | Create TIA Portal library",
+        "type": "shell",
+        "command": "&$env:tiapPath/bin/Siemens.Simatic.Lang.Library.Importer.exe -i ${workspaceFolder}\\bin\\handover-folder -o ${workspaceFolder}\\tiap-library -u",
+        "dependsOn": "TIAX | Create handover documents"
+      },
+
+
+      {
+        "label": "ONLINE | Set to RUN",
+        "type": "shell",
+        "command": "apax plc-info set-mode RUN -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Set to STOP",
+        "type": "shell",
+        "command": "apax plc-info set-mode STOP -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Get performance info",
+        "type": "shell",
+        "command": "apax perf-info -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Compare SW Online/Offline",
+        "type": "shell",
+        "command": "apax sld compare -t ${input:ipAddress} -m ${input:cmpMode}"
+      },
+      {
+        "label": "ONLINE | Get PLC infos",
+        "type": "shell",
+        "command": "apax plc-info inspect -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Compare modules & stations",
+        "type": "shell",
+        "command": "apax hw-diag list -t ${input:ipAddress} -C ${input:certificatePath} -p ${input:password}"
+      },
+
+
+
+      {
+        "label": "HWCN | Create template file from MLFB",
+        "type": "shell",
+        "command": "apax hwc generate-template-file --order-number '${input:orderNumber}' --version 'V${input:firmwareVersion}' -o '${input:outputFileName}'"
+      },
+      {
+        "label": "HWCN | Create template file from GSD",
+        "type": "shell",
+        "command": "apax hwc generate-template-file --gsd-file-name '${input:gsdFile}' --gsd-id '${input:gsdId}' -o '${input:outputFileName}'"
+      },
+      {
+        "label": "HWCN | Install GSDML file",
+        "type": "shell",
+        "command": "apax hwc install-gsd -i '${input:gsdFile}'"
+      },
+      {
+        "label": "HWCN | Setup | Certificates | Create",
+        "type": "shell",
+        "command": "apax create_certificate"
+      },
+      {
+        "label": "HWCN | Setup | Certificates | Import",
+        "type": "shell",
+        "command": "apax hwc import-certificate -n ${input:plcName} -i $env:hwcFolderPath -C ${input:importCertificatePath} -p ${input:password} --purpose ${input:certPurpose}"
+      },
+      {
+        "label": "HWCN | Setup | Set Password for secure communication",
+        "type": "shell",
+        "command": "apax hwc setup-secure-communication -n ${input:plcName} -i $env:hwcFolderPath -p ${input:password}"
+      },
+      {
+        "label": "HWCN | Compile",
+        "type": "shell",
+        "command": "apax hwc compile --input $env:hwcFolderPath --output $env:hwcBinFolderPath"
+      },
+      {
+        "label": "HWCN | Compile & Download",
+        "type": "shell",
+        "command": "apax hwld --input $env:hwcBinFolderPath/${input:plcName} -t ${input:ipAddress} --accept-security-disclaimer -C ${input:certificatePath} -M:${input:password}",
+        "dependsOn": "HWCN | Compile"
+      },
+
+
+
+      {
+        "label": "Access Protection | Users | List",
+        "type": "shell",
+        "command": "apax hwc manage-users list -i $env:hwcFolderPath -n ${input:plcName}"
+      },
+      {
+        "label": "Access Protection | Set access protection password",
+        "type": "shell",
+        "command": "apax hwc set-accessprotection-password -i $env:hwcFolderPath -n ${input:plcName} -l ${input:accessLevel} -p ${input:password}"
+      },
+      {
+        "label": "Access Protection | Users | Set password",
+        "type": "shell",
+        "command": "apax hwc manage-users -i $env:hwcFolderPath -n ${input:plcName} set-password -u ${input:userName} -p ${input:password}"
+      },
+      {
+        "label": "Access Protection | Users | Delete",
+        "type": "shell",
+        "command": "apax hwc manage-users -i $env:hwcFolderPath -n ${input:plcName} delete --userName ${input:userName}"
+      }
+    ]
+  }

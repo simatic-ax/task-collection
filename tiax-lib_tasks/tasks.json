@@ -1,0 +1,52 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "options": {
+      "env": {
+          "tiapPath": "C:/Program Files/Siemens/Automation/Portal V19"
+      }
+    },
+    "inputs": [
+    {
+      "type": "promptString",
+      "id": "ipAddress",
+      "description": "The target PLC IP address",
+      "default": "192.168.0.1"
+    }
+    ],
+    "tasks": [
+      {
+        "label": "SW | Compile",
+        "type": "shell",
+        "command": "apax build"
+      },
+      {
+        "label": "TIAX | Create handover documents",
+        "type": "shell",
+        "command": "apax ax2tia -i ${workspaceFolder}\\bin\\1500\\${workspaceFolderBasename}.lib -o ${workspaceFolder}\\bin\\handover-folder",
+        "dependsOn": "SW | Compile"
+      },      
+      {
+        "label": "TIAX | Create TIA Portal library",
+        "type": "shell",
+        "command": "&$env:tiapPath/bin/Siemens.Simatic.Lang.Library.Importer.exe -i ${workspaceFolder}\\bin\\handover-folder -o ${workspaceFolder}\\tiap-library -u",
+        "dependsOn": "TIAX | Create handover documents"
+      },
+      {
+        "label": "ONLINE | Set to RUN",
+        "type": "shell",
+        "command": "apax plc-info set-mode RUN -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Set to STOP",
+        "type": "shell",
+        "command": "apax plc-info set-mode STOP -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Get PLC infos",
+        "type": "shell",
+        "command": "apax plc-info inspect -t ${input:ipAddress}"
+      }
+    ]
+  }

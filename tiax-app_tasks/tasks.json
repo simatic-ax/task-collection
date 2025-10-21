@@ -1,0 +1,80 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "inputs": [
+    {
+      "type": "promptString",
+      "id": "ipAddress",
+      "description": "The target PLC IP address",
+      "default": "192.168.0.1"
+    },
+    {
+      "type": "pickString",
+      "id": "dlMode",
+      "description": "Select the download mode",
+      "options": [
+        "Full",
+        "Delta",
+        "Reset"
+      ],
+      "default": "Delta"
+    },
+    {
+      "type": "pickString",
+      "id": "cmpMode",
+      "description": "Select the comparasion mode",
+      "options": [
+        "Delta",
+        "All"
+      ],
+      "default": "All"
+    }
+    ],
+    "tasks": [
+      {
+        "label": "SW | Compile",
+        "type": "shell",
+        "command": "apax build"
+      },
+      {
+        "label": "SW | Download",
+        "type": "shell",
+        "command": "apax sld load --accept-security-disclaimer -i ${workspaceFolder}\\bin\\1500 -t ${input:ipAddress} -m ${input:dlMode} -r"
+      },
+      {
+        "label": "SW | Compile & download",
+        "type": "shell",
+        "command": "apax sld load --accept-security-disclaimer -i ${workspaceFolder}\\bin\\1500 -t ${input:ipAddress} -m ${input:dlMode} -r",
+        "dependsOn": "SW | Compile"
+      },
+
+
+
+      {
+        "label": "ONLINE | Compare SW Online/Offline",
+        "type": "shell",
+        "command": "apax sld compare -t ${input:ipAddress} -m ${input:cmpMode}"
+      },
+      {
+        "label": "ONLINE | Set to RUN",
+        "type": "shell",
+        "command": "apax plc-info set-mode RUN -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Set to STOP",
+        "type": "shell",
+        "command": "apax plc-info set-mode STOP -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Get performance info",
+        "type": "shell",
+        "command": "apax perf-info -t ${input:ipAddress}"
+      },
+      {
+        "label": "ONLINE | Get PLC infos",
+        "type": "shell",
+        "command": "apax plc-info inspect -t ${input:ipAddress}"
+      }
+    ]
+  }
