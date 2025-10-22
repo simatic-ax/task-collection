@@ -32,9 +32,10 @@ This folder/file can also be integrated into your own project templates in order
 
 When the tasks.json file is placed correcty, you can call the tasks by pressing F1, navigating to "Run Task", and selecting the task you want to run.
 
-There are extension such as [Task Manager](https://marketplace.visualstudio.com/items?itemName=cnshenj.vscode-task-manager), that can be found and installed directly in SIMATIC AX. This extension e.g. automatically detects all tasks and shows them in an alphabetical list where they can also be run:
+There are extension such as [Task Manager](https://marketplace.visualstudio.com/items?itemName=cnshenj.vscode-task-manager), that can be found and installed directly in SIMATIC AX. This extension e.g. automatically detects all tasks and shows them in an alphabetical list where they can also be run.
+You can also drag and drop the extension to other areas of the IDE or into other extensions like the APAX package manager extension to have your workspace better organized:
 
-<img width="462" height="550" alt="task-collection-extension" src="https://github.com/user-attachments/assets/72100fc3-5b22-4ed9-8ea1-4889bc9e79f8" />
+![Task Manager Extension in APAX Extension](docs/TaskManager_InApaxExtension.gif)
 
 ## Customizations
 
