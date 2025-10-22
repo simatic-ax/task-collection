@@ -34,7 +34,7 @@ When the tasks.json file is placed correcty, you can call the tasks by pressing 
 
 There are extension such as [Task Manager](https://marketplace.visualstudio.com/items?itemName=cnshenj.vscode-task-manager), that can be found and installed directly in SIMATIC AX. This extension e.g. automatically detects all tasks and shows them in an alphabetical list where they can also be run:
 
-![image](https://github.com/user-attachments/assets/2a8da7c2-d953-4967-bdd4-dc09b0969d61)
+<img width="462" height="550" alt="task-collection-extension" src="https://github.com/user-attachments/assets/72100fc3-5b22-4ed9-8ea1-4889bc9e79f8" />
 
 ## Customizations
 
@@ -73,3 +73,4 @@ Thanks for your interest in contributing. Anybody is free to report bugs, unclea
 
 ## License and Legal information
 Please read the [Legal information](license.md)
+
